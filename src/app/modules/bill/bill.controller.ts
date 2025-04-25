@@ -6,7 +6,7 @@ import httpStatus from "http-status";
 
 const bill = catchAsync(async (req: Request, res: Response) => {
 
-    const result = await billService.bill(req.body);
+    const result = await billService.bill(req.body,res);
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
