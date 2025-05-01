@@ -2,8 +2,8 @@ import { Response } from "express"
 import prisma from "../../shared/prisma"
 import { generateBillPdf } from "./bill-pdf"
 import { IBill } from "./bill.interface"
-const bill = async(req:IBill,res:Response)=>{
-   console.log(req)
+const bill = async (req: IBill, res: Response) => {
+
     const collegeData = await prisma.college.findFirstOrThrow({
         where: {
             id: req.collegeId
@@ -17,20 +17,36 @@ const bill = async(req:IBill,res:Response)=>{
     const TutionFeeMsg = req.TutionFeeMsg ? req.TutionFeeMsg : 0
     const absentMsg = req.absentMsg ? req.absentMsg : 0
     //total message & bill
-    const totalsmsCount = admissionMsg+groupMsg+proReMigraMsg+
-    professionalAddMsg+stdNtsMsg+TutionFeeMsg+absentMsg
+    const totalsmsCount = admissionMsg + groupMsg + proReMigraMsg +
+        professionalAddMsg + stdNtsMsg + TutionFeeMsg + absentMsg
     const messageBill = 0.4 * totalsmsCount
     //software cloud bill
     const softwareFee = req.cloudSpaceUnit * collegeData.cloudSpacePricePerUnit
-    const totalAmount = messageBill+ softwareFee
+    const totalAmount = messageBill + softwareFee
+    await prisma.bill.create({
+        data: {
+            admissionMsg,
+            groupMsg,
+            proReMigraMsg,
+            professionalAddMsg,
+            stdNtsMsg,
+            absentMsg,
+            TutionFeeMsg,
+            billingTime: req.billingTime,
+            collegeId: req.collegeId,
+            cloudSpaceUnit: req.cloudSpaceUnit,
+            billUpdate: 'PENDING'
+
+        }
+    })
     const pdfBuffer = await generateBillPdf(req, collegeData, totalAmount)
-     // Return the buffer as a downloadable PDF
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "attachment; filename=bill.pdf");
-  res.send(pdfBuffer);
+    // Return the buffer as a downloadable PDF
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=bill.pdf");
+    res.send(pdfBuffer);
 }
 
 
-export const billService= {
+export const billService = {
     bill
 }
